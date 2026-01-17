@@ -20,8 +20,31 @@ public class AuthController {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
+    @Value("${spring.profiles.active:}")
+    private String activeProfiles;
+
     public AuthController(AuthService authService) {
         this.authService = authService;
+    }
+
+    // ONLY FOR TESTING
+    @GetMapping("/dev-login")
+    public void devLogin(HttpServletResponse response, @RequestParam(defaultValue = "dev@example.com") String email) throws IOException {
+        if (!activeProfiles.contains("dev")) {
+            response.sendError(403, "Dev login only available in dev profile");
+            return;
+        }
+        var result = authService.processDevLogin(email);
+
+        Cookie cookie = new Cookie("jwt", result.dto().token());
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(24 * 60 * 60);
+        response.addCookie(cookie);
+
+        String redirect = result.needsOnboarding() ? "/onboarding" : "/dashboard";
+        response.sendRedirect(frontendUrl + redirect);
     }
 
     @GetMapping("/login/success")

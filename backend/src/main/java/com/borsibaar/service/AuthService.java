@@ -31,6 +31,14 @@ public class AuthService {
         String email = auth.getPrincipal().getAttribute("email");
         String name = auth.getPrincipal().getAttribute("name");
 
+        return processUserLogin(email, name);
+    }
+
+    public AuthResult processDevLogin(String email) {
+        return processUserLogin(email, "Dev User");
+    }
+
+    private AuthResult processUserLogin(String email, String name) {
         // Check if user exists or create a new one
         User user = userRepository.findByEmail(email)
                 .orElse(User.builder()
